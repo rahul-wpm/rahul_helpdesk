@@ -1,2 +1,2 @@
 # rahul_helpdesk
-samp proj
+This is a terminal level Python based Helpdesk program.
