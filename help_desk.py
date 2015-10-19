@@ -11,6 +11,8 @@ import MySQLdb
 from MySQLdb.cursors import DictCursor
 #For python 3.x use the following import(s) commented below
 # from pip.backwardcompat import raw_input
+#TODO Need to add docstrings in all methods
+#TODO Need to add reporting metrics here or as sepearate script
 
 class HelpDesk(object):
     """
@@ -58,7 +60,7 @@ class HelpDesk(object):
         @param password:
         @return:
         """
-        import pdb;pdb.set_trace()
+        # import pdb;pdb.set_trace()
         aes_decode_func = lambda cipher, password: cipher.decrypt(
             base64.b64decode(password)).rstrip(self.padding_symbol)
         decrypted_value = aes_decode_func(self.cipher, password)
@@ -71,7 +73,7 @@ class HelpDesk(object):
                     the staff who has less number of tickets currently.
         @return:
         """
-        import pdb;pdb.set_trace()
+        # import pdb;pdb.set_trace()
         # db = self.connect_db()
         cursor = conn.cursor()
         fetch_query="""SELECT staff_id,number_of_tickets FROM HelpDesk_Staff order by\
@@ -104,7 +106,7 @@ class HelpDesk(object):
         return
 
     def fetch_open_tickets(self,email_id,user_type):
-        import pdb;pdb.set_trace()
+        # import pdb;pdb.set_trace()
         if user_type == 'ADMIN':
             type = 'asignee_id'
         elif user_type == 'CUSTOMER':
@@ -125,8 +127,8 @@ class HelpDesk(object):
         :param password:
         :return:
         """
-        import pdb;pdb.set_trace()
-        option = raw_input("What dp you want to do? \n\t 1.Raise a Ticket "
+        # import pdb;pdb.set_trace()
+        option = raw_input("What do you want to do? \n\t 1.Raise a Ticket "
                            "\n\t 2.View Open Tickets \n\t 3. Add Followup to "
                            "an Open Ticket\n\t4.Logout \n\t Your Choice :")
         if option == '1':
@@ -275,10 +277,11 @@ class HelpDesk(object):
             if not ticket_dict:
                 print("Invalid Ticket ID")
 
-            "Not implemented"
         elif option == '3':
+            #TODO
             "Not implemented"
         elif option == '4':
+            #TODO
             "Not implemented"
         elif option == '5':
             # self.logout()
@@ -337,7 +340,7 @@ class HelpDesk(object):
                 else:
                     sys.exit()
         except Exception,e:
-            import pdb;pdb.set_trace()
+            # import pdb;pdb.set_trace()
             print e
 
 
@@ -414,8 +417,8 @@ if __name__ == '__main__':
     Main Function
     """
     try:
-        import pdb
-        pdb.set_trace()
+        # import pdb
+        # pdb.set_trace()
         helpdesk_obj = HelpDesk()
         option = helpdesk_obj.home_page()
     except SystemExit:
