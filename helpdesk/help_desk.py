@@ -238,7 +238,8 @@ class HelpDesk(object):
         :return:
         """
         import pdb;pdb.set_trace()
-        option = raw_input("What dp you want to do? \n\t 1.View Assigned/Open\
+        option = raw_input("\n\tWhat do you want to do? \n\t 1.View "
+                           "Assigned/Open\
                            Tickets\n\t 2.Reply /Open Tickets\n\t 3.Close "
                            "Tickets\n\t\
                            4.View Ticket History\n\t 5.Logout\nYour choice: ")
@@ -265,7 +266,6 @@ class HelpDesk(object):
                 print("\n\tNo Open Tickets\n\n")
                 self.admin_portal(asignee_id,email_id)
         elif option == '2':
-            current_time=datetime.datetime.now()
             db = self.connect_db()
             cursor = db.cursor()
             follow_up_ticket_id = raw_input("Enter Ticket ID :")
@@ -274,8 +274,46 @@ class HelpDesk(object):
                 follow_up_ticket_id,asignee_id)
             cursor.execute(check_valid_query)
             ticket_dict=cursor.fetchone()
-            if not ticket_dict:
+            current_time=datetime.datetime.now()
+            if ticket_dict:
+                if ticket_dict['status'] == 'NEW':
+                    update_query1="""UPDATE HelpDesk_Ticket SET \
+                    status='OPEN',asignee='%s',updated_date='%s'  where
+                    ticket_id='%s'""" %(asignee_id,current_time,
+                                        follow_up_ticket_id)
+                    cursor.execute(update_query1)
+                    message=''
+                    msg_flag=raw_input("\n\tDo you wish to add followup "
+                                       "message? [Y/N] :")
+                    if msg_flag.upper() == 'Y':
+                        message=raw_input("\n\nEnter followup message : ")
+                    if not message:
+                        #Adding Default message
+                        message = 'Your ticket has been taken up! We will ' \
+                                  'reply with the solution soon! Thanks for ' \
+                                  'your patience.'
+                    insert_qry1="""INSERT INTO HelpDesk_Ticket_History (
+                    ticket_id,customer_id,subject,content,status,asignee_id,
+                    created_date) values('%s','%s','%s','%s','%s','%s',
+                    '%s')"""%(follow_up_ticket_id,ticket_dict['customer_id'],
+                              ticket_dict['subject'],message,'OPEN',
+                              asignee_id,current_time)
+
+
+                elif ticket_dict['status'] == 'OPEN':
+                    message=''
+                    msg_flag=raw_input("\n\tDo you wish to add followup "
+                                       "message? [Y/N] :")
+                    if msg_flag.upper() == 'Y':
+                        message=raw_input("\n\nEnter followup message : ")
+                        if not message:
+                            self.admin_portal(self,asignee_id,email_id)
+
+                    else:
+                        self.admin_portal(self,asignee_id,email_id)
+            else:
                 print("Invalid Ticket ID")
+
 
         elif option == '3':
             #TODO
