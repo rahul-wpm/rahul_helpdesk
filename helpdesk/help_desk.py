@@ -92,6 +92,7 @@ class HelpDesk(object):
                 update_staff_table = """UPDATE HelpDesk_Staff\
                 set number_of_tickets='%s',updated_date='%s'""" % (
                     no_of_tickets, current_time)
+                cursor.execute(update_staff_table)
                 staff_details_query = """select id, firstname, lastname,\
                 email_id from HelpDesk_User where id='%s'""" %(staff_id)
                 cursor.execute(staff_details_query)
@@ -115,7 +116,7 @@ class HelpDesk(object):
         cursor = db.cursor()
 
         fetch_open_query = """SELECT ticket_id,customer_id,subject,\
-                    status, asignee_id,created_date FROM HelpDesk_Tickets where\
+                    status, asignee_id,created_date FROM HelpDesk_Ticket where\
                     %s='%s' and status in('NEW','OPEN')""" %(str(type),
                                                              str(email_id))
         cursor.execute(fetch_open_query)
@@ -244,41 +245,46 @@ class HelpDesk(object):
                            "Tickets\n\t\
                            4.View Ticket History\n\t 5.Logout\nYour choice: ")
         if option == '1':
+            #View Open Tickets
             db = self.connect_db()
             cursor = db.cursor()
 
             fetch_open_query = """SELECT ticket_id,subject,status,
             asignee_id,created_date FROM HelpDesk_Ticket where
-            asignee_id='%s' and status in('NEW','OPEN')""" % str(email_id)
+            asignee_id='%s' and status in('NEW','OPEN')""" % str(asignee_id)
             cursor.execute(fetch_open_query)
             open_ticket_list = list(cursor.fetchall())
             if open_ticket_list:
+                header_string=''
                 for per_ticket in open_ticket_list:
-                    print("\n")
                     for header,value in per_ticket.iteritems():
-                        print("\t%s"%str(header.upper()))
+                        header_string =header_string+"\t%s"%str(header.upper())
                     break
+                print("%s\n"%str(header_string))
                 for ticket in open_ticket_list:
-                    print("\n")
+                    value_string=''
                     for header,value in per_ticket.iteritems():
-                        print("\t%s"%str(value))
+                        value_string=value_string+"\t%s"%str(value)
+                    print("%s\n"%str(value_string))
+                    self.admin_portal(asignee_id,email_id)
             else:
                 print("\n\tNo Open Tickets\n\n")
                 self.admin_portal(asignee_id,email_id)
         elif option == '2':
+            #Open or followup with an open ticket
             db = self.connect_db()
             cursor = db.cursor()
             follow_up_ticket_id = raw_input("Enter Ticket ID :")
             check_valid_query="""SELECT * from HelpDesk_Ticket where
-            ticket_id='%s' and asignee_id='%s'""" % str(
-                follow_up_ticket_id,asignee_id)
+            ticket_id='%s' and asignee_id='%s'""" %  (str(
+                follow_up_ticket_id),str(asignee_id))
             cursor.execute(check_valid_query)
             ticket_dict=cursor.fetchone()
             current_time=datetime.datetime.now()
             if ticket_dict:
                 if ticket_dict['status'] == 'NEW':
                     update_query1="""UPDATE HelpDesk_Ticket SET \
-                    status='OPEN',asignee='%s',updated_date='%s'  where
+                    status='OPEN',asignee_id='%s',opened_date='%s'  where
                     ticket_id='%s'""" %(asignee_id,current_time,
                                         follow_up_ticket_id)
                     cursor.execute(update_query1)
@@ -298,37 +304,130 @@ class HelpDesk(object):
                     '%s')"""%(follow_up_ticket_id,ticket_dict['customer_id'],
                               ticket_dict['subject'],message,'OPEN',
                               asignee_id,current_time)
-
-
+                    cursor.execute(insert_qry1)
+                    db.commit()
                 elif ticket_dict['status'] == 'OPEN':
                     message=''
-                    msg_flag=raw_input("\n\tDo you wish to add followup "
-                                       "message? [Y/N] :")
-                    if msg_flag.upper() == 'Y':
-                        message=raw_input("\n\nEnter followup message : ")
-                        if not message:
-                            self.admin_portal(self,asignee_id,email_id)
-
-                    else:
+                    message=raw_input("\n\nEnter followup message : ")
+                    if not message:
+                        print("Nothing to be updated")
                         self.admin_portal(self,asignee_id,email_id)
+                    else:
+                        current_time=datetime.datetime.now()
+                        insert_qry1="""INSERT INTO HelpDesk_Ticket_History (
+                        ticket_id,customer_id,subject,content,status,
+                        asignee_id, created_date) values('%s','%s','%s',
+                        '%s','%s','%s','%s')""" %(follow_up_ticket_id,
+                                              ticket_dict['customer_id'],
+                                              ticket_dict['subject'],
+                                              message,'OPEN',asignee_id,
+                                              current_time)
+                        cursor.execute(insert_qry1)
+                        db.commit()
+                        print("Database updated successfully!!!")
             else:
                 print("Invalid Ticket ID")
 
 
         elif option == '3':
-            #TODO
-            "Not implemented"
+            #Close an existing ticket
+            db = self.connect_db()
+            cursor = db.cursor()
+            follow_up_ticket_id = raw_input("Enter Ticket ID :")
+            check_valid_query="""SELECT * from HelpDesk_Ticket where
+            ticket_id='%s' and asignee_id='%s'""" % (str(
+                follow_up_ticket_id),str(asignee_id))
+            cursor.execute(check_valid_query)
+            ticket_dict=cursor.fetchone()
+            current_time=datetime.datetime.now()
+            if ticket_dict:
+                message=''
+                message=raw_input("\n\nEnter followup message : ")
+                if not message:
+                    print("Nothing to be updated")
+                    self.admin_portal(self,asignee_id,email_id)
+                else:
+                    current_time=datetime.datetime.now()
+                    update_query1="""UPDATE HelpDesk_Ticket SET \
+                    status='CLOSED',asignee_id='%s',closed_date='%s'
+                    where ticket_id='%s'""" %(asignee_id,current_time,
+                                        follow_up_ticket_id)
+                    cursor.execute(update_query1)
+                    if ticket_dict['status'] == 'NEW':
+                        insert_qry1="""INSERT INTO HelpDesk_Ticket_History (
+                        ticket_id,customer_id,subject,content,status,
+                        asignee_id, created_date) values('%s','%s','%s',
+                        '%s','%s','%s','%s')""" %(follow_up_ticket_id,
+                                              ticket_dict['customer_id'],
+                                              ticket_dict['subject'],
+                                              message,'OPEN',asignee_id,
+                                              current_time)
+                        cursor.execute(insert_qry1)
+                    insert_qry2="""INSERT INTO HelpDesk_Ticket_History (
+                        ticket_id,customer_id,subject,content,status,
+                        asignee_id, created_date) values('%s','%s','%s',
+                        '%s','%s','%s','%s')""" %(follow_up_ticket_id,
+                                              ticket_dict['customer_id'],
+                                              ticket_dict['subject'],
+                                              message,'CLOSED',asignee_id,
+                                              current_time)
+                    cursor.execute(insert_qry2)
+                    fetch_query1="""select * from HelpDesk_Staff where \
+                                    staff_id ='%s'"""%str(asignee_id)
+                    cursor.execute(fetch_query1)
+                    staff_details=cursor.fetchone()
+                    if staff_details:
+                        no_of_tickets = staff_details['number_of_tickets']-1
+                        if no_of_tickets >= 0:
+                            update_staff_table = """UPDATE HelpDesk_Staff\
+                            set number_of_tickets='%s',updated_date='%s'""" % (
+                                no_of_tickets, current_time)
+                            cursor.execute(update_staff_table)
+
+                            insert_qry = """UPDATE
+                            HelpDesk_Staff_TicketHistory SET
+                            completed_date='%s' WHERE staff_id='%s' and
+                            ticket_id='%s' """ % (current_time,
+                            str(asignee_id), follow_up_ticket_id)
+                            cursor.execute(insert_qry)
+                    db.commit()
+                    print("Database updated successfully!!!")
+            else:
+                print("Invalid Ticket ID")
+
         elif option == '4':
-            #TODO
+            #Show ticket history
             "Not implemented"
+            db = self.connect_db()
+            cursor = db.cursor()
+
+            fetch_open_query = """SELECT ticket_id,status,subject,
+            asignee_id,created_date,opened_date,closed_date FROM
+            HelpDesk_Ticket where asignee_id='%s' """ % str(asignee_id)
+            cursor.execute(fetch_open_query)
+            open_ticket_list = list(cursor.fetchall())
+            if open_ticket_list:
+                header_string=''
+                for per_ticket in open_ticket_list:
+                    for header,value in per_ticket.iteritems():
+                        header_string =header_string+"\t%s"%str(header.upper())
+                    break
+                print("%s\n"%str(header_string))
+                for ticket in open_ticket_list:
+                    value_string=''
+                    for header,value in per_ticket.iteritems():
+                        value_string=value_string+"\t%s"%str(value)
+                    print("%s\n"%str(value_string))
+                    self.admin_portal(asignee_id,email_id)
+            else:
+                print("\n\tNo Assigned tickets yet !!!\n\n")
+                self.admin_portal(asignee_id,email_id)
         elif option == '5':
             # self.logout()
             sys.exit()
         else:
             print("\n\tInvalid Option try again...\n\n")
             self.admin_portal(asignee_id,email_id)
-
-
         return
 
     def login(self):
@@ -377,9 +476,9 @@ class HelpDesk(object):
                     self.customer_signup()
                 else:
                     sys.exit()
-        except Exception,e:
-            # import pdb;pdb.set_trace()
-            print e
+        except Exception:
+            print(traceback.format_exc())
+            raise Exception
 
 
     def customer_signup(self):
