@@ -221,7 +221,7 @@ class HelpDesk(object):
                                         check_valid_ticket['customer_id'],
                                         check_valid_ticket['subject'],
                                         update_message,
-                                        check_valid_ticket['assignee_id'],
+                                        check_valid_ticket['asignee_id'],
                                         check_valid_ticket['status'],
                                         check_valid_ticket['customer_id'],
                                         current_time)
