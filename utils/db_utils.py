@@ -1,9 +1,12 @@
 __author__ = 'Rahul.R'
-def connect_db(self):
+import MySQLdb
+from MySQLdb.cursors import DictCursor
+def connect_db():
     """
+    Connects to the
     :return:
     """
-    self.db = MySQLdb.connect(host="127.0.0.1", user="singlebox",
+    db = MySQLdb.connect(host="127.0.0.1", user="singlebox",
                               passwd="global!23", db="test",
                               cursorclass=MySQLdb.cursors.DictCursor)
-    return self.db
+    return db

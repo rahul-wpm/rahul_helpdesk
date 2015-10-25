@@ -90,8 +90,8 @@ class HelpDesk(object):
                 no_of_tickets = per_staff['number_of_tickets']+1
                 cursor.execute(insert_staff_histoy)
                 update_staff_table = """UPDATE HelpDesk_Staff\
-                set number_of_tickets='%s',updated_date='%s'""" % (
-                    no_of_tickets, current_time)
+                set number_of_tickets='%s',updated_date='%s' where
+                staff_id='%s'""" % (no_of_tickets, current_time,staff_id)
                 cursor.execute(update_staff_table)
                 staff_details_query = """select id, firstname, lastname,\
                 email_id from HelpDesk_User where id='%s'""" %(staff_id)
@@ -195,6 +195,10 @@ class HelpDesk(object):
                 print("\n\tNo Open Tickets\n\n")
                 self.customer_portal(customer_id,email_id)
         elif option =='3':
+            open_ticket_list=self.fetch_open_tickets(email_id,'CUSTOMER')
+            if not open_ticket_list:
+                print("\n\tNo Open Tickets\n\n")
+                self.customer_portal(customer_id,email_id)
             current_time=datetime.datetime.now()
             db = self.connect_db()
             cursor = db.cursor()
@@ -300,10 +304,13 @@ class HelpDesk(object):
                                   'your patience.'
                     insert_qry1="""INSERT INTO HelpDesk_Ticket_History (
                     ticket_id,customer_id,subject,content,status,asignee_id,
-                    created_date) values('%s','%s','%s','%s','%s','%s',
-                    '%s')"""%(follow_up_ticket_id,ticket_dict['customer_id'],
-                              ticket_dict['subject'],message,'OPEN',
-                              asignee_id,current_time)
+                    created_date,content_update_by) values('%s','%s','%s',
+                    '%s',%s,'%s','%s','%s')""" % (follow_up_ticket_id,
+                                                 ticket_dict['customer_id'],
+                                                  ticket_dict['subject'],
+                                                  message,'OPEN',
+                                                  asignee_id,current_time,
+                                                  asignee_id)
                     cursor.execute(insert_qry1)
                     db.commit()
                 elif ticket_dict['status'] == 'OPEN':
@@ -380,8 +387,9 @@ class HelpDesk(object):
                         no_of_tickets = staff_details['number_of_tickets']-1
                         if no_of_tickets >= 0:
                             update_staff_table = """UPDATE HelpDesk_Staff\
-                            set number_of_tickets='%s',updated_date='%s'""" % (
-                                no_of_tickets, current_time)
+                            set number_of_tickets='%s',updated_date='%s'
+                            where staff_id='%s'""" % (
+                                no_of_tickets, current_time,asignee_id)
                             cursor.execute(update_staff_table)
 
                             insert_qry = """UPDATE
