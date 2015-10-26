@@ -29,6 +29,8 @@ class Reports(object):
             for per_record in result_dict_list:
                 value_string = ''
                 for header,value in per_record.iteritems():
+                    if header=='avg_time':
+                       value=str(datetime.timedelta(seconds=int(value)))
                     value_string += "\t%s" % str(value)
                 print("%s\n"%str(value_string))
         return
@@ -93,7 +95,8 @@ class Reports(object):
         """
         cursor = self.db.cursor()
         average_response_time = """SELECT T1.ticket_id, \
-        avg(time_to_sec(timediff(T2.created_date,T1.created_date))) FROM \
+        avg(time_to_sec(timediff(T2.created_date,\
+        T1.created_date))) avg_time FROM \
         HelpDesk_Ticket_History  T1 INNER JOIN  HelpDesk_Ticket_History  T2 \
         on T1.created_date < T2.created_date and T1.ticket_id=T2.ticket_id \
         WHERE T1.status in ('OPEN') and T2.status in ('OPEN') GROUP BY \
@@ -115,7 +118,7 @@ class Reports(object):
                 time_taken from HelpDesk_Ticket where closed_date is not null\
                 order by time_taken limit 1"""
         cursor.execute(min_ticket_lifetime)
-        min_time_result=cursor.fechone()
+        min_time_result=cursor.fetchone()
         if min_time_result:
             min_value = str(datetime.timedelta(seconds=int(
                                             min_time_result['time_taken'])))
@@ -127,7 +130,7 @@ class Reports(object):
                 time_taken from HelpDesk_Ticket where closed_date is not null\
                 order by time_taken desc limit 1"""
         cursor.execute(max_ticket_lifetime)
-        max_time_result=cursor.fechone()
+        max_time_result=cursor.fetchone()
         if max_time_result:
             max_value = str(datetime.timedelta(seconds=int(
                                             max_time_result['time_taken'])))
@@ -138,8 +141,8 @@ class Reports(object):
             avg(time_to_sec(timediff(closed_date,created_date))) time_taken\
             from HelpDesk_Ticket where closed_date is not null"""
         cursor.execute(avg_ticket_lifetime)
-        avg_time_result=cursor.fechone()
-        if avg_time_result:
+        avg_time_result=cursor.fetchone()
+        if avg_time_result['time_taken']:
             avg_value = str(datetime.timedelta(seconds=int(
                                             avg_time_result['time_taken'])))
             print("\n\tAverage Life Time taken by a ticket : '%s'" % str(
@@ -158,7 +161,7 @@ class Reports(object):
         cursor = self.db.cursor()
         staff_performance_qry = """select staff_id,\
         avg(time_to_sec(timediff(completed_date,assigned_date))) avg_time FROM\
-        HelpDesk_Staff_TicketHistory where avg_time is not null group by \
+        HelpDesk_Staff_TicketHistory where completed_date is not null group by \
         staff_id order by avg_time"""
         cursor.execute(staff_performance_qry)
         staff_performance_result = cursor.fetchall()
