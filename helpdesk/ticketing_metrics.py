@@ -20,17 +20,17 @@ class Reports(object):
         @return: None
         """
         if result_dict_list:
-        header_string = ''
-        for per_record in result_dict_list:
-            for header in per_record.keys():
-                header_string += "\t%s" % str(header.upper())
-            break
-        print(header_string)
-        for per_record in result_dict_list:
-            value_string = ''
-            for header,value in per_record.iteritems():
-                value_string += "\t%s" % str(value)
-            print("%s\n"%str(value_string))
+            header_string = ''
+            for per_record in result_dict_list:
+                for header in per_record.keys():
+                    header_string += "\t%s" % str(header.upper())
+                break
+            print(header_string)
+            for per_record in result_dict_list:
+                value_string = ''
+                for header,value in per_record.iteritems():
+                    value_string += "\t%s" % str(value)
+                print("%s\n"%str(value_string))
         return
 
     def average_first_reply(self):
