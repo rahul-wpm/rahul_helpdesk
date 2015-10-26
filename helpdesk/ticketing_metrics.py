@@ -2,17 +2,21 @@ __author__ = 'Rahul.R'
 import traceback
 import datetime
 from utils.db_utils import connect_db
+
+
 class Reports(object):
     """
     @summary : This class generates reports relates to the Help Desk tickets.
     """
+
     def __init__(self):
         """
         @summary: Constructor
         @return: None
         """
         self.db = connect_db()
-    def display_metrics(self,result_dict_list):
+
+    def display_metrics(self, result_dict_list):
         """
         @summary : This method is used for displaying the headers and the values
                    of the query result
@@ -28,11 +32,11 @@ class Reports(object):
             print(header_string)
             for per_record in result_dict_list:
                 value_string = ''
-                for header,value in per_record.iteritems():
-                    if header=='avg_time':
-                       value=str(datetime.timedelta(seconds=int(value)))
+                for header, value in per_record.iteritems():
+                    if header == 'avg_time':
+                        value = str(datetime.timedelta(seconds=int(value)))
                     value_string += "\t\t%s" % str(value)
-                print("%s\n"%str(value_string))
+                print("%s\n" % str(value_string))
         return
 
     def average_first_reply(self):
@@ -58,16 +62,16 @@ class Reports(object):
             print(header_string)
             for per_month in avg_response_month:
                 value_string = ''
-                for header,value in per_month.iteritems():
-                    if header=='avg_response_time':
-                        value=str(datetime.timedelta(seconds=int(value)))
+                for header, value in per_month.iteritems():
+                    if header == 'avg_response_time':
+                        value = str(datetime.timedelta(seconds=int(value)))
                     value_string += "\t%s" % str(value)
-                print("%s\n"%str(value_string))
+                print("%s\n" % str(value_string))
 
-        first_resp_year = """select asignee_id,extract(YEAR from
-        opened_date) as year, avg(time_to_sec(timediff(opened_date,
-        created_date))) as avg_response_time from  \
-        HelpDesk_Ticket where opened_date is not null group by month,
+        first_resp_year = """SELECT asignee_id,extract(YEAR FROM
+        opened_date) AS year, avg(time_to_sec(timediff(opened_date,
+        created_date))) AS avg_response_time FROM  \
+        HelpDesk_Ticket WHERE opened_date IS NOT NULL GROUP BY month,
         asignee_id"""
 
         cursor.execute(first_resp__month)
@@ -81,12 +85,13 @@ class Reports(object):
             print(header_string1)
             for per_year in avg_response_year:
                 value_string1 = ''
-                for header,value in per_year.iteritems():
-                    if header=='avg_response_time':
-                        value=str(datetime.timedelta(seconds=int(value)))
+                for header, value in per_year.iteritems():
+                    if header == 'avg_response_time':
+                        value = str(datetime.timedelta(seconds=int(value)))
                     value_string1 += "\t%s" % str(value)
-                print("%s\n"%str(value_string1))
+                print("%s\n" % str(value_string1))
         return
+
     def average_reponse_time(self):
         """
         @summary : Average Response time of Customer /Staff while ticket
@@ -101,10 +106,10 @@ class Reports(object):
         HelpDesk_Ticket_History TT WHERE TT.created_date < T.created_date \
         and TT.ticket_id = T.ticket_id and TT.status in ('OPEN') )),0) as result \
         FROM HelpDesk_Ticket_History T where T.status in ('OPEN') \
-        order by T.ticket_id, T.history_id) tmp group by tmp.ticket_id"""
+        order by T.ticket_id, T.history_id) tmp GROUP BY tmp.ticket_id"""
 
         cursor.execute(average_response_time)
-        avg_response_open=cursor.fetchall()
+        avg_response_open = cursor.fetchall()
         self.display_metrics(avg_response_open)
         return
 
@@ -115,27 +120,27 @@ class Reports(object):
         @return: None
         """
         cursor = self.db.cursor()
-        min_ticket_lifetime="""select ticket_id,\
+        min_ticket_lifetime = """select ticket_id,\
                 time_to_sec(timediff(closed_date,created_date))\
                 time_taken from HelpDesk_Ticket where closed_date is not null\
                 order by time_taken limit 1"""
         cursor.execute(min_ticket_lifetime)
-        min_time_result=cursor.fetchone()
+        min_time_result = cursor.fetchone()
         if min_time_result:
             min_value = str(datetime.timedelta(seconds=int(
-                                            min_time_result['time_taken'])))
+                min_time_result['time_taken'])))
             print("\n\t Minimum Life Time taken by a ticket : '%s'" % str(
                 min_value))
 
-        max_ticket_lifetime="""select ticket_id,\
+        max_ticket_lifetime = """select ticket_id,\
                 time_to_sec(timediff(closed_date,created_date))\
                 time_taken from HelpDesk_Ticket where closed_date is not null\
                 order by time_taken desc limit 1"""
         cursor.execute(max_ticket_lifetime)
-        max_time_result=cursor.fetchone()
+        max_time_result = cursor.fetchone()
         if max_time_result:
             max_value = str(datetime.timedelta(seconds=int(
-                                            max_time_result['time_taken'])))
+                max_time_result['time_taken'])))
             print("\n\tMaximum Life Time taken by a ticket : '%s'" % str(
                 max_value))
 
@@ -143,16 +148,13 @@ class Reports(object):
             avg(time_to_sec(timediff(closed_date,created_date))) time_taken\
             from HelpDesk_Ticket where closed_date is not null"""
         cursor.execute(avg_ticket_lifetime)
-        avg_time_result=cursor.fetchone()
+        avg_time_result = cursor.fetchone()
         if avg_time_result['time_taken']:
             avg_value = str(datetime.timedelta(seconds=int(
-                                            avg_time_result['time_taken'])))
+                avg_time_result['time_taken'])))
             print("\n\tAverage Life Time taken by a ticket : '%s'" % str(
                 avg_value))
         return
-
-
-
 
     def staff_performance(self):
         """
@@ -171,13 +173,13 @@ class Reports(object):
         return
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     """
     @summary : Main Method
     @:return : None
     """
     try:
-        rep_obj=Reports()
+        rep_obj = Reports()
         print("\n \t Average First Response Per Month and Per Year \n")
         rep_obj.average_first_reply()
         print("\n \t Average Response time of Customer/Staff for Open tickets "
