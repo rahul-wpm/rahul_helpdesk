@@ -31,7 +31,7 @@ class Reports(object):
                 for header,value in per_record.iteritems():
                     if header=='avg_time':
                        value=str(datetime.timedelta(seconds=int(value)))
-                    value_string += "\t%s" % str(value)
+                    value_string += "\t\t%s" % str(value)
                 print("%s\n"%str(value_string))
         return
 
@@ -94,13 +94,15 @@ class Reports(object):
         @return: None
         """
         cursor = self.db.cursor()
-        average_response_time = """SELECT T1.ticket_id, \
-        avg(time_to_sec(timediff(T2.created_date,\
-        T1.created_date))) avg_time FROM \
-        HelpDesk_Ticket_History  T1 INNER JOIN  HelpDesk_Ticket_History  T2 \
-        on T1.created_date < T2.created_date and T1.ticket_id=T2.ticket_id \
-        WHERE T1.status in ('OPEN') and T2.status in ('OPEN') GROUP BY \
-        T1.ticket_id ORDER  by T1.created_date"""
+        average_response_time = """SELECT tmp.ticket_id as ticket_id,\
+        AVG(time_to_sec(tmp.result)) as avg_time FROM \
+        (SELECT T.ticket_id, T.history_id, T.created_date, \
+        IFNULL(timediff(T.created_date,(select MAX(TT.created_date) FROM\
+        HelpDesk_Ticket_History TT WHERE TT.created_date < T.created_date \
+        and TT.ticket_id = T.ticket_id and TT.status in ('OPEN') )),0) as result \
+        FROM HelpDesk_Ticket_History T where T.status in ('OPEN') \
+        order by T.ticket_id, T.history_id) tmp group by tmp.ticket_id"""
+
         cursor.execute(average_response_time)
         avg_response_open=cursor.fetchall()
         self.display_metrics(avg_response_open)
